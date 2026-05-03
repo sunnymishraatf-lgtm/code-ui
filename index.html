@@ -1,1156 +1,1195 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Code Generator</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap"
-    rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0d0f14;
-      --surface: #13161e;
-      --surface2: #1a1e2a;
-      --border: #252a38;
-      --accent: #f97316;
-      --accent2: #fb923c;
-      --green: #22c55e;
-      --muted: #6b7280;
-      --text: #e5e7eb;
-      --text-dim: #9ca3af;
-      --code-bg: #0a0c10;
-      --radius: 12px;
-    }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* ── BACKGROUND GRID ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.35;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ── GLOW ── */
-    body::after {
-      content: '';
-      position: fixed;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 700px;
-      height: 400px;
-      background: radial-gradient(ellipse, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .wrapper {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 860px;
-      padding: 40px 20px 80px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-    }
-
-    /* ── HEADER ── */
-    header {
-      text-align: center;
-      padding: 20px 0 4px;
-    }
-
-    .logo-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .logo-icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, var(--accent), #ea580c);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
-    }
-
-    h1 {
-      font-size: clamp(26px, 4vw, 36px);
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 30%, var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .tagline {
-      font-size: 14px;
-      color: var(--muted);
-      letter-spacing: 0.02em;
-    }
-
-    /* ── TAB SWITCHER ── */
-    .tab-bar {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
-
-    .tab-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 24px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-dim);
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'Syne', sans-serif;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .tab-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--accent), #ea580c);
-      border-color: var(--accent);
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(249, 115, 22, 0.35);
-    }
-
-    /* ── CARD ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    /* ── TOOLBAR ── */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    .toolbar-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-right: 4px;
-    }
-
-    .pill-group {
-      display: flex;
-      gap: 6px;
-    }
-
-    .pill {
-      padding: 5px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'Syne', sans-serif;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .pill.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-      box-shadow: 0 0 12px rgba(249, 115, 22, 0.35);
-    }
-
-    select {
-      padding: 5px 28px 5px 10px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 12px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      outline: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      transition: border-color 0.15s;
-    }
-
-    select:hover,
-    select:focus {
-      border-color: var(--accent);
-    }
-
-    /* ── TEXTAREA ── */
-    .input-area {
-      padding: 18px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 130px;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.7;
-      resize: vertical;
-      caret-color: var(--accent);
-    }
-
-    textarea::placeholder {
-      color: var(--muted);
-    }
-
-    /* ── ACTION ROW ── */
-    .action-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 18px;
-      border-top: 1px solid var(--border);
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .file-btn {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 8px 16px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-dim);
-      font-size: 13px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .file-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .gen-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 28px;
-      background: linear-gradient(135deg, var(--accent), #ea580c);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      font-family: 'Syne', sans-serif;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 20px rgba(249, 115, 22, 0.35);
-      letter-spacing: 0.02em;
-    }
-
-    .gen-btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 28px rgba(249, 115, 22, 0.5);
-    }
-
-    .gen-btn:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .gen-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    /* ── SPINNER ── */
-    .spinner {
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .loading .spinner {
-      display: block;
-    }
-
-    .loading .btn-text {
-      display: none;
-    }
-
-    /* ── RESULT ── */
-    .result-card {
-      display: none;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .result-card.visible {
-      display: flex;
-    }
-
-    /* ── RESULT HEADER ── */
-    .result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .lang-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--accent);
-    }
-
-    .lang-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--green);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.4;
-      }
-    }
-
-    .result-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-dim);
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'Syne', sans-serif;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .icon-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .icon-btn.success {
-      border-color: var(--green);
-      color: var(--green);
-      background: rgba(34, 197, 94, 0.08);
-    }
-
-    /* ── CODE BLOCK ── */
-    .code-scroll {
-      background: var(--code-bg);
-      overflow-x: auto;
-      padding: 24px 22px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* Line numbers */
-    .code-scroll pre {
-      display: flex;
-      gap: 0;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13.5px;
-      line-height: 1.75;
-      color: #c9d1d9;
-      tab-size: 2;
-      white-space: pre;
-      counter-reset: line;
-    }
-
-    .line-numbers {
-      display: flex;
-      flex-direction: column;
-      padding-right: 20px;
-      border-right: 1px solid var(--border);
-      margin-right: 20px;
-      user-select: none;
-      min-width: 36px;
-      text-align: right;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .line-numbers span {
-      line-height: 1.75;
-    }
-
-    .code-content {
-      flex: 1;
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    /* ── OUTPUT BLOCK ── */
-    .output-section {
-      padding: 16px 20px;
-      display: none;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .output-section.visible {
-      display: block;
-    }
-
-    .output-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-
-    .output-text {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      color: var(--green);
-      background: rgba(34, 197, 94, 0.06);
-      border: 1px solid rgba(34, 197, 94, 0.15);
-      border-radius: 8px;
-      padding: 12px 16px;
-      white-space: pre-wrap;
-      line-height: 1.7;
-    }
-
-    /* ── META BAR ── */
-    .meta-bar {
-      display: flex;
-      gap: 20px;
-      padding: 12px 20px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .meta-item strong {
-      color: var(--text-dim);
-      font-weight: 600;
-    }
-
-    /* ── SHARE ROW ── */
-    .share-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      flex-wrap: wrap;
-    }
-
-    .share-url {
-      flex: 1;
-      padding: 8px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
-      user-select: all;
-    }
-
-    /* ── ERROR ── */
-    .error-box {
-      display: none;
-      padding: 14px 18px;
-      background: rgba(239, 68, 68, 0.08);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: var(--radius);
-      color: #f87171;
-      font-size: 13px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .error-box.visible {
-      display: block;
-    }
-
-    /* ── SHIMMER LOADING ── */
-    .shimmer {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      padding: 24px 22px;
-      background: var(--code-bg);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .shimmer.visible {
-      display: flex;
-    }
-
-    .shimmer-line {
-      height: 14px;
-      border-radius: 4px;
-      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-
-    @keyframes shimmer {
-      0% {
-        background-position: 200% 0;
-      }
-
-      100% {
-        background-position: -200% 0;
-      }
-    }
-
-    /* ── SHARE TAB ── */
-    .share-tab {
-      display: none;
-      padding: 20px;
-    }
-
-    .share-tab.visible {
-      display: block;
-    }
-
-    .share-tab h2 {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 20px;
-      background: linear-gradient(135deg, #fff 30%, var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .share-textarea {
-      width: 100%;
-      height: 200px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.7;
-      resize: vertical;
-      outline: none;
-      caret-color: var(--accent);
-    }
-
-    .share-textarea:focus {
-      border-color: var(--accent);
-    }
-
-    .share-textarea::placeholder {
-      color: var(--muted);
-    }
-
-    .share-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-
-    .share-link-display {
-      margin-top: 16px;
-      padding: 12px 16px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--green);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      word-break: break-all;
-      display: none;
-    }
-
-    .share-link-display.visible {
-      display: block;
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      .toolbar {
-        gap: 8px;
-      }
-
-      .action-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .gen-btn {
-        justify-content: center;
-      }
-
-      .meta-bar {
-        gap: 12px;
-      }
-
-      .tab-bar {
-        flex-direction: column;
-      }
-
-      .share-actions {
-        flex-direction: column;
-      }
-    }
-  </style>
-  <base target="_blank">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Code Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #13161e;
+    --surface2:  #1a1e2a;
+    --border:    #252a38;
+    --accent:    #f97316;
+    --accent2:   #fb923c;
+    --green:     #22c55e;
+    --muted:     #6b7280;
+    --text:      #e5e7eb;
+    --text-dim:  #9ca3af;
+    --code-bg:   #0a0c10;
+    --radius:    12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(249,115,22,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 860px;
+    padding: 40px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px 0 4px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), #ea580c);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 30px rgba(249,115,22,0.4);
+  }
+
+  h1 {
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tagline {
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent), #ea580c);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(249,115,22,0.35);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .toolbar-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+
+  .pill-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .pill {
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(249,115,22,0.35);
+  }
+
+  select {
+    padding: 5px 28px 5px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.15s;
+  }
+
+  select:hover, select:focus { border-color: var(--accent); }
+
+  .input-area {
+    padding: 18px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    resize: vertical;
+    caret-color: var(--accent);
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .file-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .file-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .gen-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 28px;
+    background: linear-gradient(135deg, var(--accent), #ea580c);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(249,115,22,0.35);
+    letter-spacing: 0.02em;
+  }
+
+  .gen-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(249,115,22,0.5);
+  }
+
+  .gen-btn:active:not(:disabled) { transform: translateY(0); }
+
+  .gen-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading .spinner { display: block; }
+  .loading .btn-text { display: none; }
+
+  .result-card {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .result-card.visible { display: flex; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .lang-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .lang-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .icon-btn.success {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(34,197,94,0.08);
+  }
+
+  .code-scroll {
+    background: var(--code-bg);
+    overflow-x: auto;
+    padding: 24px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-scroll pre {
+    display: flex;
+    gap: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: #c9d1d9;
+    tab-size: 2;
+    white-space: pre;
+    counter-reset: line;
+  }
+
+  .line-numbers {
+    display: flex;
+    flex-direction: column;
+    padding-right: 20px;
+    border-right: 1px solid var(--border);
+    margin-right: 20px;
+    user-select: none;
+    min-width: 36px;
+    text-align: right;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .line-numbers span { line-height: 1.75; }
+
+  .code-content {
+    flex: 1;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .output-section {
+    padding: 16px 20px;
+    display: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .output-section.visible { display: block; }
+
+  .output-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .output-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--green);
+    background: rgba(34,197,94,0.06);
+    border: 1px solid rgba(34,197,94,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+
+  .meta-bar {
+    display: flex;
+    gap: 20px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .meta-item strong {
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .share-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .share-url {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    user-select: all;
+  }
+
+  .error-box {
+    display: none;
+    padding: 14px 18px;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: var(--radius);
+    color: #f87171;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .error-box.visible { display: block; }
+
+  .shimmer {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px 22px;
+    background: var(--code-bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .shimmer.visible { display: flex; }
+
+  .shimmer-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .share-tab {
+    display: none;
+    padding: 20px;
+  }
+
+  .share-tab.visible { display: block; }
+
+  .share-tab h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .share-textarea {
+    width: 100%;
+    height: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    caret-color: var(--accent);
+  }
+
+  .share-textarea:focus { border-color: var(--accent); }
+
+  .share-textarea::placeholder { color: var(--muted); }
+
+  .share-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .share-link-display {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    word-break: break-all;
+    display: none;
+  }
+
+  .share-link-display.visible { display: block; }
+
+  /* ── DEBUG PANEL ── */
+  .debug-panel {
+    display: none;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .debug-panel.visible {
+    display: block;
+  }
+
+  .debug-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .debug-log {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--text-dim);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .debug-log .success { color: var(--green); }
+  .debug-log .error { color: #f87171; }
+  .debug-log .info { color: var(--accent2); }
+
+  .api-config {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .api-config input {
+    flex: 1;
+    min-width: 250px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .api-config input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  @media (max-width: 600px) {
+    .toolbar { gap: 8px; }
+    .action-row { flex-direction: column; align-items: stretch; }
+    .gen-btn { justify-content: center; }
+    .meta-bar { gap: 12px; }
+    .tab-bar { flex-direction: column; }
+    .share-actions { flex-direction: column; }
+    .api-config { flex-direction: column; align-items: stretch; }
+  }
+</style>
+<base target="_blank">
 </head>
-
 <body>
 
-  <div class="wrapper">
+<div class="wrapper">
 
-    <!-- HEADER -->
-    <header>
-      <div class="logo-row">
-        <div class="logo-icon">🔥</div>
-        <h1>Code Generator</h1>
+  <!-- HEADER -->
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">🔥</div>
+      <h1>Code Generator</h1>
+    </div>
+    <p class="tagline">Describe it. Generate it. Share it.</p>
+  </header>
+
+  <!-- API CONFIG (for debugging) -->
+  <div class="card" id="apiConfigCard" style="display:none">
+    <div class="toolbar">
+      <span class="toolbar-label">API Configuration</span>
+    </div>
+    <div class="input-area">
+      <div class="api-config">
+        <input type="text" id="apiUrlInput" placeholder="Backend API URL (e.g., https://your-api.com)" />
+        <button class="gen-btn" onclick="saveApiUrl()">Save</button>
+        <button class="icon-btn" onclick="testConnection()">Test</button>
       </div>
-      <p class="tagline">Describe it. Generate it. Share it.</p>
-    </header>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">
+        Current: <span id="currentApiUrl" style="color:var(--accent2)">—</span>
+      </p>
+    </div>
+  </div>
 
-    <!-- TAB SWITCHER -->
-    <div class="tab-bar">
-      <button class="tab-btn active" id="tabGenerate" onclick="showTab('generate')">⚡ Generate</button>
-      <button class="tab-btn" id="tabShare" onclick="showTab('share')">🔗 Code Share</button>
+  <!-- TAB SWITCHER -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabGenerate" onclick="showTab('generate')">⚡ Generate</button>
+    <button class="tab-btn" id="tabShare" onclick="showTab('share')">🔗 Code Share</button>
+  </div>
+
+  <!-- DEBUG PANEL -->
+  <div class="debug-panel" id="debugPanel">
+    <div class="debug-title">🔍 Debug Log</div>
+    <div class="debug-log" id="debugLog"></div>
+  </div>
+
+  <!-- GENERATE TAB -->
+  <div id="generateTab">
+    <!-- INPUT CARD -->
+    <div class="card">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <span class="toolbar-label">Mode</span>
+        <div class="pill-group">
+          <button class="pill active" data-mode="standard" onclick="setMode('standard', this)">⚡ Standard</button>
+          <button class="pill" data-mode="fast" onclick="setMode('fast', this)">🚀 Fast</button>
+        </div>
+        <span class="toolbar-label" style="margin-left:8px">Language</span>
+        <select id="langSelect">
+          <option value="Auto">🔍 Auto</option>
+          <option value="Python">Python</option>
+          <option value="JavaScript">JavaScript</option>
+          <option value="TypeScript">TypeScript</option>
+          <option value="Java">Java</option>
+          <option value="C++">C++</option>
+          <option value="Go">Go</option>
+          <option value="Rust">Rust</option>
+          <option value="SQL">SQL</option>
+        </select>
+      </div>
+
+      <!-- Input -->
+      <div class="input-area">
+        <textarea id="userInput" placeholder="e.g. Write a Python function to reverse a linked list..." spellcheck="false"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-row">
+        <label class="file-btn" for="fileInput">
+          📎 Upload File
+          <input type="file" id="fileInput" accept=".py,.js,.ts,.java,.cpp,.c,.go,.rs,.sql,.txt,.jsx,.tsx" hidden onchange="handleFileUpload(event)"/>
+        </label>
+        <button class="gen-btn" id="genBtn" onclick="handleGenerate()">
+          <div class="spinner"></div>
+          <span class="btn-text">✦ Generate</span>
+        </button>
+      </div>
     </div>
 
-    <!-- GENERATE TAB -->
-    <div id="generateTab">
-      <!-- INPUT CARD -->
-      <div class="card">
-        <!-- Toolbar -->
-        <div class="toolbar">
-          <span class="toolbar-label">Mode</span>
-          <div class="pill-group">
-            <button class="pill active" data-mode="standard" onclick="setMode('standard', this)">⚡ Standard</button>
-            <button class="pill" data-mode="fast" onclick="setMode('fast', this)">🚀 Fast</button>
-          </div>
-          <span class="toolbar-label" style="margin-left:8px">Language</span>
-          <select id="langSelect">
-            <option value="Auto">🔍 Auto</option>
-            <option value="Python">Python</option>
-            <option value="JavaScript">JavaScript</option>
-            <option value="TypeScript">TypeScript</option>
-            <option value="Java">Java</option>
-            <option value="C++">C++</option>
-            <option value="Go">Go</option>
-            <option value="Rust">Rust</option>
-            <option value="SQL">SQL</option>
-          </select>
-        </div>
+    <!-- ERROR -->
+    <div class="error-box" id="errorBox"></div>
 
-        <!-- Input -->
-        <div class="input-area">
-          <textarea id="userInput" placeholder="e.g. Write a Python function to reverse a linked list..."
-            spellcheck="false"></textarea>
-        </div>
+    <!-- RESULT CARD -->
+    <div class="card result-card" id="resultCard">
 
-        <!-- Actions -->
-        <div class="action-row">
-          <label class="file-btn" for="fileInput">
-            📎 Upload File
-            <input type="file" id="fileInput" accept=".py,.js,.ts,.java,.cpp,.c,.go,.rs,.sql,.txt,.jsx,.tsx" hidden
-              onchange="handleFileUpload(event)" />
-          </label>
-          <button class="gen-btn" id="genBtn" onclick="handleGenerate()">
-            <div class="spinner"></div>
-            <span class="btn-text">✦ Generate</span>
+      <!-- Result header -->
+      <div class="result-header">
+        <div class="lang-badge">
+          <div class="lang-dot"></div>
+          <span id="langLabel">—</span>
+        </div>
+        <div class="result-actions">
+          <button class="icon-btn" id="copyBtn" onclick="copyCode()">
+            📋 Copy Code
+          </button>
+          <button class="icon-btn" id="shareBtn" onclick="copyShareLink()">
+            🔗 Share
           </button>
         </div>
       </div>
 
-      <!-- ERROR -->
-      <div class="error-box" id="errorBox"></div>
+      <!-- Shimmer while loading -->
+      <div class="shimmer" id="shimmer">
+        <div class="shimmer-line" style="width:55%"></div>
+        <div class="shimmer-line" style="width:80%"></div>
+        <div class="shimmer-line" style="width:65%"></div>
+        <div class="shimmer-line" style="width:72%"></div>
+        <div class="shimmer-line" style="width:48%"></div>
+      </div>
 
-      <!-- RESULT CARD -->
-      <div class="card result-card" id="resultCard">
-
-        <!-- Result header -->
-        <div class="result-header">
-          <div class="lang-badge">
-            <div class="lang-dot"></div>
-            <span id="langLabel">—</span>
-          </div>
-          <div class="result-actions">
-            <button class="icon-btn" id="copyBtn" onclick="copyCode()">
-              📋 Copy Code
-            </button>
-            <button class="icon-btn" id="shareBtn" onclick="copyShareLink()">
-              🔗 Share
-            </button>
-          </div>
-        </div>
-
-        <!-- Shimmer while loading -->
-        <div class="shimmer" id="shimmer">
-          <div class="shimmer-line" style="width:55%"></div>
-          <div class="shimmer-line" style="width:80%"></div>
-          <div class="shimmer-line" style="width:65%"></div>
-          <div class="shimmer-line" style="width:72%"></div>
-          <div class="shimmer-line" style="width:48%"></div>
-        </div>
-
-        <!-- Code block with line numbers -->
-        <div class="code-scroll" id="codeBlock" style="display:none">
-          <pre>
+      <!-- Code block with line numbers -->
+      <div class="code-scroll" id="codeBlock" style="display:none">
+        <pre>
           <div class="line-numbers" id="lineNumbers"></div>
           <div class="code-content" id="codeContent"></div>
         </pre>
-        </div>
-
-        <!-- Output -->
-        <div class="output-section" id="outputSection">
-          <div class="output-label">▶ Output</div>
-          <div class="output-text" id="outputText"></div>
-        </div>
-
-        <!-- Meta -->
-        <div class="meta-bar" id="metaBar" style="display:none">
-          <div class="meta-item">🤖 <strong id="metaModel">—</strong></div>
-          <div class="meta-item">⚡ <strong id="metaLatency">—</strong></div>
-          <div class="meta-item">🪙 <strong id="metaTokens">—</strong></div>
-          <div class="meta-item">🔖 <strong id="metaType">—</strong></div>
-        </div>
-
-        <!-- Share URL -->
-        <div class="share-row" id="shareRow" style="display:none">
-          <span class="output-label" style="margin-bottom:0;white-space:nowrap">🔗 Share:</span>
-          <div class="share-url" id="shareUrlDisplay">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SHARE TAB -->
-    <div id="shareTab" class="share-tab">
-      <h2>🔗 Code Share</h2>
-
-      <textarea id="shareCode" class="share-textarea" placeholder="Paste your code here..."></textarea>
-
-      <div class="share-actions">
-        <button class="gen-btn" onclick="createShare()">Create Share Link</button>
-        <button class="icon-btn" onclick="copySharedCode()">📋 Copy Code</button>
       </div>
 
-      <div class="share-link-display" id="shareLink"></div>
-    </div>
+      <!-- Output -->
+      <div class="output-section" id="outputSection">
+        <div class="output-label">▶ Output</div>
+        <div class="output-text" id="outputText"></div>
+      </div>
 
+      <!-- Meta -->
+      <div class="meta-bar" id="metaBar" style="display:none">
+        <div class="meta-item">🤖 <strong id="metaModel">—</strong></div>
+        <div class="meta-item">⚡ <strong id="metaLatency">—</strong></div>
+        <div class="meta-item">🪙 <strong id="metaTokens">—</strong></div>
+        <div class="meta-item">🔖 <strong id="metaType">—</strong></div>
+      </div>
+
+      <!-- Share URL -->
+      <div class="share-row" id="shareRow" style="display:none">
+        <span class="output-label" style="margin-bottom:0;white-space:nowrap">🔗 Share:</span>
+        <div class="share-url" id="shareUrlDisplay">—</div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    // ── CONFIG ──
-    // IMPORTANT: Update this to match your backend URL
-    // If frontend and backend are on the same domain, use relative path: ''
-    const API_URL = "https://codeshare-fixed.onrender.com";
+  <!-- SHARE TAB -->
+  <div id="shareTab" class="share-tab">
+    <h2>🔗 Code Share</h2>
 
-    let currentMode = 'standard';
-    let currentShareUrl = '';
-    let currentCode = '';
+    <textarea id="shareCode" class="share-textarea" placeholder="Paste your code here..."></textarea>
 
-    function setMode(mode, btn) {
-      currentMode = mode;
-      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
+    <div class="share-actions">
+      <button class="gen-btn" onclick="createShare()">Create Share Link</button>
+      <button class="icon-btn" onclick="copySharedCode()">📋 Copy Code</button>
+    </div>
+
+    <div class="share-link-display" id="shareLink"></div>
+  </div>
+
+</div>
+
+<script>
+  // ── CONFIG ──
+  // Try to load API URL from localStorage, fallback to default
+  const DEFAULT_API_URL = "https://codeshare-fixed.onrender.com";
+  let API_URL = localStorage.getItem('codeshare_api_url') || DEFAULT_API_URL;
+
+  let currentMode = 'standard';
+  let currentShareUrl = '';
+  let currentCode = '';
+
+  // ── DEBUG LOGGING ──
+  function debug(msg, type = 'info') {
+    const panel = document.getElementById('debugPanel');
+    const log = document.getElementById('debugLog');
+    const time = new Date().toLocaleTimeString();
+    const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+    log.innerHTML += `<div class="${className}">[${time}] ${msg}</div>`;
+    panel.classList.add('visible');
+    log.scrollTop = log.scrollHeight;
+    console.log(`[${type.toUpperCase()}] ${msg}`);
+  }
+
+  // ── API CONFIG ──
+  function showApiConfig() {
+    document.getElementById('apiConfigCard').style.display = 'block';
+    document.getElementById('apiUrlInput').value = API_URL;
+    document.getElementById('currentApiUrl').textContent = API_URL;
+  }
+
+  function saveApiUrl() {
+    const url = document.getElementById('apiUrlInput').value.trim();
+    if (url) {
+      API_URL = url.replace(/\/$/, ''); // remove trailing slash
+      localStorage.setItem('codeshare_api_url', API_URL);
+      document.getElementById('currentApiUrl').textContent = API_URL;
+      debug(`API URL saved: ${API_URL}`, 'success');
     }
+  }
 
-    // ── TAB SWITCHING ──
-    function showTab(tab) {
-      const generateTab = document.getElementById('generateTab');
-      const shareTab = document.getElementById('shareTab');
-      const tabGenerate = document.getElementById('tabGenerate');
-      const tabShare = document.getElementById('tabShare');
-
-      if (tab === 'generate') {
-        generateTab.style.display = 'block';
-        shareTab.classList.remove('visible');
-        tabGenerate.classList.add('active');
-        tabShare.classList.remove('active');
-      } else if (tab === 'share') {
-        generateTab.style.display = 'none';
-        shareTab.classList.add('visible');
-        tabGenerate.classList.remove('active');
-        tabShare.classList.add('active');
-      }
-    }
-
-    // ── GENERATE ──
-    async function handleGenerate() {
-      const userInput = document.getElementById('userInput').value.trim();
-      if (!userInput) return;
-
-      const language = document.getElementById('langSelect').value;
-      startLoading();
-
-      try {
-        const res = await fetch(`${API_URL}/api/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userInput, language, mode: currentMode })
-        });
-
+  async function testConnection() {
+    debug('Testing connection to ' + API_URL + '...');
+    try {
+      const res = await fetch(`${API_URL}/api/health`, { method: 'GET', mode: 'cors' });
+      debug(`Health check: ${res.status} ${res.statusText}`, res.ok ? 'success' : 'error');
+      if (res.ok) {
         const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || data.details || 'Generation failed');
-        showResult(data);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        stopLoading();
+        debug(`Response: ${JSON.stringify(data).substring(0, 200)}`, 'success');
       }
+    } catch (err) {
+      debug(`Connection failed: ${err.message}`, 'error');
+      debug('This usually means CORS is not enabled on the backend, or the URL is wrong.', 'error');
+    }
+  }
+
+  function setMode(mode, btn) {
+    currentMode = mode;
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── TAB SWITCHING ──
+  function showTab(tab) {
+    const generateTab = document.getElementById('generateTab');
+    const shareTab = document.getElementById('shareTab');
+    const tabGenerate = document.getElementById('tabGenerate');
+    const tabShare = document.getElementById('tabShare');
+
+    if (tab === 'generate') {
+      generateTab.style.display = 'block';
+      shareTab.classList.remove('visible');
+      tabGenerate.classList.add('active');
+      tabShare.classList.remove('active');
+    } else if (tab === 'share') {
+      generateTab.style.display = 'none';
+      shareTab.classList.add('visible');
+      tabGenerate.classList.remove('active');
+      tabShare.classList.add('active');
+    }
+  }
+
+  // ── GENERATE ──
+  async function handleGenerate() {
+    const userInput = document.getElementById('userInput').value.trim();
+    if (!userInput) return;
+
+    const language = document.getElementById('langSelect').value;
+    startLoading();
+
+    try {
+      debug(`POST ${API_URL}/api/generate`);
+      const res = await fetch(`${API_URL}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userInput, language, mode: currentMode })
+      });
+
+      debug(`Response: ${res.status} ${res.statusText}`);
+      const data = await res.json();
+      debug(`Data keys: ${Object.keys(data).join(', ')}`);
+
+      if (!res.ok || !data.success) throw new Error(data.error || data.details || 'Generation failed');
+      showResult(data);
+    } catch (err) {
+      debug(`Generate error: ${err.message}`, 'error');
+      showError(err.message);
+    } finally {
+      stopLoading();
+    }
+  }
+
+  // ── FILE UPLOAD ──
+  async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const language = document.getElementById('langSelect').value;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('language', language);
+
+    startLoading();
+
+    try {
+      debug(`POST ${API_URL}/api/upload`);
+      const res = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Upload failed');
+      showResult(data);
+    } catch (err) {
+      debug(`Upload error: ${err.message}`, 'error');
+      showError(err.message);
+    } finally {
+      stopLoading();
+      event.target.value = '';
+    }
+  }
+
+  // ── SHOW RESULT ──
+  function showResult(data) {
+    hideError();
+    currentCode = data.code || '';
+    currentShareUrl = data.shareUrl || '';
+
+    document.getElementById('langLabel').textContent = data.language || 'Code';
+
+    const lines = currentCode.split('\n');
+    const lineNums = document.getElementById('lineNumbers');
+    lineNums.innerHTML = lines.map((_, i) => `<span>${i + 1}</span>`).join('');
+    document.getElementById('codeContent').textContent = currentCode;
+    document.getElementById('codeBlock').style.display = 'block';
+    document.getElementById('shimmer').classList.remove('visible');
+
+    const outputSection = document.getElementById('outputSection');
+    if (data.output && data.output.trim()) {
+      document.getElementById('outputText').textContent = data.output;
+      outputSection.classList.add('visible');
+    } else {
+      outputSection.classList.remove('visible');
     }
 
-    // ── FILE UPLOAD ──
-    async function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    if (data.meta) {
+      document.getElementById('metaModel').textContent = (data.meta.model || '').split('/').pop() || '—';
+      document.getElementById('metaLatency').textContent = data.meta.latencyMs ? `${data.meta.latencyMs}ms` : '—';
+      document.getElementById('metaTokens').textContent = data.meta.tokens ? `${data.meta.tokens} tokens` : '—';
+      document.getElementById('metaType').textContent = data.meta.inputType || '—';
+      document.getElementById('metaBar').style.display = 'flex';
+    }
 
-      const language = document.getElementById('langSelect').value;
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('language', language);
+    if (currentShareUrl) {
+      document.getElementById('shareUrlDisplay').textContent = currentShareUrl;
+      document.getElementById('shareRow').style.display = 'flex';
+    }
 
-      startLoading();
+    document.getElementById('resultCard').classList.add('visible');
 
+    setTimeout(() => {
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  // ── COPY CODE ──
+  async function copyCode() {
+    if (!currentCode) return;
+    await navigator.clipboard.writeText(currentCode);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('success');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Code';
+      btn.classList.remove('success');
+    }, 2000);
+  }
+
+  // ── COPY SHARE LINK ──
+  async function copyShareLink() {
+    if (!currentShareUrl) return;
+    await navigator.clipboard.writeText(currentShareUrl);
+    const btn = document.getElementById('shareBtn');
+    btn.textContent = '✅ Link Copied!';
+    btn.classList.add('success');
+    setTimeout(() => {
+      btn.textContent = '🔗 Share';
+      btn.classList.remove('success');
+    }, 2000);
+  }
+
+  // ── LOADING STATE ──
+  function startLoading() {
+    const btn = document.getElementById('genBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    hideError();
+
+    document.getElementById('resultCard').classList.add('visible');
+    document.getElementById('shimmer').classList.add('visible');
+    document.getElementById('codeBlock').style.display = 'none';
+    document.getElementById('outputSection').classList.remove('visible');
+    document.getElementById('metaBar').style.display = 'none';
+    document.getElementById('shareRow').style.display = 'none';
+  }
+
+  function stopLoading() {
+    const btn = document.getElementById('genBtn');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    document.getElementById('shimmer').classList.remove('visible');
+  }
+
+  // ── ERROR ──
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = `❌ ${msg}`;
+    box.classList.add('visible');
+    document.getElementById('resultCard').classList.remove('visible');
+  }
+
+  function hideError() {
+    document.getElementById('errorBox').classList.remove('visible');
+  }
+
+  // ── KEYBOARD SHORTCUT ──
+  document.getElementById('userInput').addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleGenerate();
+  });
+
+  // ── CREATE SHARE ──
+  async function createShare() {
+    const code = document.getElementById("shareCode").value;
+    if (!code) {
+      alert("Write code first");
+      return;
+    }
+
+    try {
+      debug(`POST ${API_URL}/api/generate (share creation)`);
+      const res = await fetch(`${API_URL}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userInput: code,
+          language: "Auto",
+          mode: "standard"
+        })
+      });
+
+      const data = await res.json();
+      debug(`Share response keys: ${Object.keys(data).join(', ')}`);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Share creation failed');
+
+      const slug = data.slug;
+      const link = `${window.location.origin}?slug=${slug}`;
+      const linkDisplay = document.getElementById("shareLink");
+      linkDisplay.textContent = link;
+      linkDisplay.classList.add('visible');
+      debug(`Share link created: ${link}`, 'success');
+    } catch (err) {
+      debug(`Share error: ${err.message}`, 'error');
+      alert("Error: " + err.message);
+    }
+  }
+
+  // ── COPY SHARED CODE ──
+  async function copySharedCode() {
+    const code = document.getElementById("shareCode").value;
+    if (!code) return;
+    await navigator.clipboard.writeText(code);
+    alert("Code copied to clipboard!");
+  }
+
+  // ── LOAD CODE FROM LINK ──
+  async function loadSharedCode() {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
+
+    if (!slug) {
+      debug('No slug in URL, skipping load');
+      return;
+    }
+
+    debug(`Loading shared code for slug: ${slug}`);
+    debug(`Using API URL: ${API_URL}`);
+
+    // Show API config panel since we're having issues
+    showApiConfig();
+
+    const endpoints = [
+      `${API_URL}/api/s/${slug}`,
+      `${API_URL}/api/share/${slug}`,
+      `${API_URL}/share/${slug}`,
+      `${API_URL}/api/code/${slug}`,
+      `${API_URL}/code/${slug}`,
+      `${API_URL}/s/${slug}`
+    ];
+
+    let data = null;
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
       try {
-        const res = await fetch(`${API_URL}/api/upload`, {
-          method: 'POST',
-          body: formData
-        });
+        debug(`Trying: ${endpoint}`);
+        const res = await fetch(endpoint, { mode: 'cors' });
+        debug(`  → ${res.status} ${res.statusText}`);
 
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Upload failed');
-        showResult(data);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        stopLoading();
-        event.target.value = '';
-      }
-    }
-
-    // ── SHOW RESULT ──
-    function showResult(data) {
-      hideError();
-      currentCode = data.code || '';
-      currentShareUrl = data.shareUrl || '';
-
-      // Language badge
-      document.getElementById('langLabel').textContent = data.language || 'Code';
-
-      // Code with line numbers
-      const lines = currentCode.split('\n');
-      const lineNums = document.getElementById('lineNumbers');
-      lineNums.innerHTML = lines.map((_, i) => `<span>${i + 1}</span>`).join('');
-      document.getElementById('codeContent').textContent = currentCode;
-      document.getElementById('codeBlock').style.display = 'block';
-      document.getElementById('shimmer').classList.remove('visible');
-
-      // Output
-      const outputSection = document.getElementById('outputSection');
-      if (data.output && data.output.trim()) {
-        document.getElementById('outputText').textContent = data.output;
-        outputSection.classList.add('visible');
-      } else {
-        outputSection.classList.remove('visible');
-      }
-
-      // Meta
-      if (data.meta) {
-        document.getElementById('metaModel').textContent = (data.meta.model || '').split('/').pop() || '—';
-        document.getElementById('metaLatency').textContent = data.meta.latencyMs ? `${data.meta.latencyMs}ms` : '—';
-        document.getElementById('metaTokens').textContent = data.meta.tokens ? `${data.meta.tokens} tokens` : '—';
-        document.getElementById('metaType').textContent = data.meta.inputType || '—';
-        document.getElementById('metaBar').style.display = 'flex';
-      }
-
-      // Share URL
-      if (currentShareUrl) {
-        document.getElementById('shareUrlDisplay').textContent = currentShareUrl;
-        document.getElementById('shareRow').style.display = 'flex';
-      }
-
-      document.getElementById('resultCard').classList.add('visible');
-
-      // Smooth scroll
-      setTimeout(() => {
-        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-
-    // ── COPY CODE ──
-    async function copyCode() {
-      if (!currentCode) return;
-      await navigator.clipboard.writeText(currentCode);
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = '✅ Copied!';
-      btn.classList.add('success');
-      setTimeout(() => {
-        btn.textContent = '📋 Copy Code';
-        btn.classList.remove('success');
-      }, 2000);
-    }
-
-    // ── COPY SHARE LINK ──
-    async function copyShareLink() {
-      if (!currentShareUrl) return;
-      await navigator.clipboard.writeText(currentShareUrl);
-      const btn = document.getElementById('shareBtn');
-      btn.textContent = '✅ Link Copied!';
-      btn.classList.add('success');
-      setTimeout(() => {
-        btn.textContent = '🔗 Share';
-        btn.classList.remove('success');
-      }, 2000);
-    }
-
-    // ── LOADING STATE ──
-    function startLoading() {
-      const btn = document.getElementById('genBtn');
-      btn.classList.add('loading');
-      btn.disabled = true;
-      hideError();
-
-      // Show shimmer in result area
-      document.getElementById('resultCard').classList.add('visible');
-      document.getElementById('shimmer').classList.add('visible');
-      document.getElementById('codeBlock').style.display = 'none';
-      document.getElementById('outputSection').classList.remove('visible');
-      document.getElementById('metaBar').style.display = 'none';
-      document.getElementById('shareRow').style.display = 'none';
-    }
-
-    function stopLoading() {
-      const btn = document.getElementById('genBtn');
-      btn.classList.remove('loading');
-      btn.disabled = false;
-      document.getElementById('shimmer').classList.remove('visible');
-    }
-
-    // ── ERROR ──
-    function showError(msg) {
-      const box = document.getElementById('errorBox');
-      box.textContent = `❌ ${msg}`;
-      box.classList.add('visible');
-      document.getElementById('resultCard').classList.remove('visible');
-    }
-
-    function hideError() {
-      document.getElementById('errorBox').classList.remove('visible');
-    }
-
-    // ── KEYBOARD SHORTCUT ──
-    document.getElementById('userInput').addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleGenerate();
-    });
-
-    // ── CREATE SHARE (from share tab) ──
-    async function createShare() {
-      const code = document.getElementById("shareCode").value;
-
-      if (!code) {
-        alert("Write code first");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/api/generate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userInput: code,
-            language: "Auto",
-            mode: "standard"
-          })
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Share creation failed');
-
-        const slug = data.slug;
-        const link = `${window.location.origin}?slug=${slug}`;
-        const linkDisplay = document.getElementById("shareLink");
-        linkDisplay.textContent = link;
-        linkDisplay.classList.add('visible');
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
-    }
-
-    // ── COPY SHARED CODE ──
-    async function copySharedCode() {
-      const code = document.getElementById("shareCode").value;
-      if (!code) return;
-      await navigator.clipboard.writeText(code);
-      alert("Code copied to clipboard!");
-    }
-
-    // ── LOAD CODE FROM LINK ──
-    async function loadSharedCode() {
-      const params = new URLSearchParams(window.location.search);
-      const slug = params.get("slug");
-
-      if (!slug) return;
-
-      try {
-        // Try multiple possible endpoint patterns
-        const endpoints = [
-          `${API_URL}/api/s/${slug}`,
-          `${API_URL}/api/share/${slug}`,
-          `${API_URL}/share/${slug}`,
-          `${API_URL}/api/code/${slug}`,
-          `${API_URL}/code/${slug}`
-        ];
-
-        let data = null;
-        let lastError = null;
-
-        for (const endpoint of endpoints) {
-          try {
-            const res = await fetch(endpoint);
-            if (res.ok) {
-              data = await res.json();
-              console.log(`Success with endpoint: ${endpoint}`, data);
-              break;
-            }
-          } catch (err) {
-            lastError = err;
-            console.log(`Failed with endpoint: ${endpoint}`, err.message);
-          }
+        if (res.ok) {
+          data = await res.json();
+          debug(`  → Success! Keys: ${Object.keys(data).join(', ')}`, 'success');
+          break;
+        } else {
+          const errText = await res.text();
+          debug(`  → Failed: ${errText.substring(0, 100)}`, 'error');
         }
-
-        if (!data) {
-          throw new Error(`All endpoints failed. Last error: ${lastError?.message}`);
-        }
-
-        // Handle different response formats
-        const code = data.code || data.source || data.content || data.data?.code || data.data?.source || data.data?.content;
-
-        if (!code) {
-          console.error("Response structure:", data);
-          throw new Error("Could not find code in response. Check console for response structure.");
-        }
-
-        showTab("share");
-        document.getElementById("shareCode").value = code;
       } catch (err) {
-        console.error("Error loading shared code:", err);
-        showError("Failed to load shared code: " + err.message);
+        lastError = err;
+        debug(`  → Network error: ${err.message}`, 'error');
       }
     }
 
-    window.onload = loadSharedCode;
-  </script>
+    if (!data) {
+      const errMsg = lastError ? lastError.message : 'All endpoints returned non-200';
+      debug(`All endpoints failed. Last error: ${errMsg}`, 'error');
+      showError(`Failed to load shared code: ${errMsg}. Check Debug Log above.`);
+      return;
+    }
+
+    // Extract code from various possible response formats
+    const code = data.code || data.source || data.content || data.data?.code || data.data?.source || data.data?.content || JSON.stringify(data);
+
+    if (!code || code === '[object Object]') {
+      debug(`Could not extract code from response. Full response: ${JSON.stringify(data)}`, 'error');
+      showError("Could not find code in response. Check Debug Log for details.");
+      return;
+    }
+
+    showTab("share");
+    document.getElementById("shareCode").value = code;
+    debug(`Code loaded successfully (${code.length} chars)`, 'success');
+  }
+
+  window.onload = loadSharedCode;
+</script>
 
 </body>
-
 </html>

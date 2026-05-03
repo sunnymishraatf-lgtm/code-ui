@@ -113,6 +113,42 @@
     letter-spacing: 0.02em;
   }
 
+  /* ── TAB SWITCHER ── */
+  .tab-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent), #ea580c);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(249,115,22,0.35);
+  }
+
   /* ── CARD ── */
   .card {
     background: var(--surface);
@@ -515,14 +551,76 @@
     100% { background-position: -200% 0; }
   }
 
+  /* ── SHARE TAB ── */
+  .share-tab {
+    display: none;
+    padding: 20px;
+  }
+
+  .share-tab.visible { display: block; }
+
+  .share-tab h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .share-textarea {
+    width: 100%;
+    height: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    caret-color: var(--accent);
+  }
+
+  .share-textarea:focus { border-color: var(--accent); }
+
+  .share-textarea::placeholder { color: var(--muted); }
+
+  .share-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .share-link-display {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    word-break: break-all;
+    display: none;
+  }
+
+  .share-link-display.visible { display: block; }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 600px) {
     .toolbar { gap: 8px; }
     .action-row { flex-direction: column; align-items: stretch; }
     .gen-btn { justify-content: center; }
     .meta-bar { gap: 12px; }
+    .tab-bar { flex-direction: column; }
+    .share-actions { flex-direction: column; }
   }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -536,134 +634,135 @@
     </div>
     <p class="tagline">Describe it. Generate it. Share it.</p>
   </header>
-  <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
-  <button onclick="showTab('generate')">⚡ Generate</button>
-  <button onclick="showTab('share')">🔗 Code Share</button>
-</div>
 
-<div id="generateTab">
-  <!-- INPUT CARD -->
-  <div class="card">
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <span class="toolbar-label">Mode</span>
-      <div class="pill-group">
-        <button class="pill active" data-mode="standard" onclick="setMode('standard', this)">⚡ Standard</button>
-        <button class="pill" data-mode="fast" onclick="setMode('fast', this)">🚀 Fast</button>
-      </div>
-      <span class="toolbar-label" style="margin-left:8px">Language</span>
-      <select id="langSelect">
-        <option value="Auto">🔍 Auto</option>
-        <option value="Python">Python</option>
-        <option value="JavaScript">JavaScript</option>
-        <option value="TypeScript">TypeScript</option>
-        <option value="Java">Java</option>
-        <option value="C++">C++</option>
-        <option value="Go">Go</option>
-        <option value="Rust">Rust</option>
-        <option value="SQL">SQL</option>
-      </select>
-    </div>
-
-    <!-- Input -->
-    <div class="input-area">
-      <textarea id="userInput" placeholder="e.g. Write a Python function to reverse a linked list..." spellcheck="false"></textarea>
-    </div>
-
-    <!-- Actions -->
-    <div class="action-row">
-      <label class="file-btn">
-        📎 Upload File
-        <input type="file" id="fileInput" accept=".py,.js,.ts,.java,.cpp,.c,.go,.rs,.sql,.txt,.jsx,.tsx" hidden onchange="handleFileUpload(event)"/>
-      </label>
-      <button class="gen-btn" id="genBtn" onclick="handleGenerate()">
-        <div class="spinner"></div>
-        <span class="btn-text">✦ Generate</span>
-      </button>
-    </div>
+  <!-- TAB SWITCHER -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabGenerate" onclick="showTab('generate')">⚡ Generate</button>
+    <button class="tab-btn" id="tabShare" onclick="showTab('share')">🔗 Code Share</button>
   </div>
 
-  <!-- ERROR -->
-  <div class="error-box" id="errorBox"></div>
-
-  <!-- RESULT CARD -->
-  <div class="card result-card" id="resultCard">
-
-    <!-- Result header -->
-    <div class="result-header">
-      <div class="lang-badge">
-        <div class="lang-dot"></div>
-        <span id="langLabel">—</span>
+  <!-- GENERATE TAB -->
+  <div id="generateTab">
+    <!-- INPUT CARD -->
+    <div class="card">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <span class="toolbar-label">Mode</span>
+        <div class="pill-group">
+          <button class="pill active" data-mode="standard" onclick="setMode('standard', this)">⚡ Standard</button>
+          <button class="pill" data-mode="fast" onclick="setMode('fast', this)">🚀 Fast</button>
+        </div>
+        <span class="toolbar-label" style="margin-left:8px">Language</span>
+        <select id="langSelect">
+          <option value="Auto">🔍 Auto</option>
+          <option value="Python">Python</option>
+          <option value="JavaScript">JavaScript</option>
+          <option value="TypeScript">TypeScript</option>
+          <option value="Java">Java</option>
+          <option value="C++">C++</option>
+          <option value="Go">Go</option>
+          <option value="Rust">Rust</option>
+          <option value="SQL">SQL</option>
+        </select>
       </div>
-      <div class="result-actions">
-        <button class="icon-btn" id="copyBtn" onclick="copyCode()">
-          📋 Copy Code
-        </button>
-        <button class="icon-btn" id="shareBtn" onclick="copyShareLink()">
-          🔗 Share
+
+      <!-- Input -->
+      <div class="input-area">
+        <textarea id="userInput" placeholder="e.g. Write a Python function to reverse a linked list..." spellcheck="false"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-row">
+        <label class="file-btn" for="fileInput">
+          📎 Upload File
+          <input type="file" id="fileInput" accept=".py,.js,.ts,.java,.cpp,.c,.go,.rs,.sql,.txt,.jsx,.tsx" hidden onchange="handleFileUpload(event)"/>
+        </label>
+        <button class="gen-btn" id="genBtn" onclick="handleGenerate()">
+          <div class="spinner"></div>
+          <span class="btn-text">✦ Generate</span>
         </button>
       </div>
     </div>
 
-    <!-- Shimmer while loading -->
-    <div class="shimmer" id="shimmer">
-      <div class="shimmer-line" style="width:55%"></div>
-      <div class="shimmer-line" style="width:80%"></div>
-      <div class="shimmer-line" style="width:65%"></div>
-      <div class="shimmer-line" style="width:72%"></div>
-      <div class="shimmer-line" style="width:48%"></div>
-    </div>
+    <!-- ERROR -->
+    <div class="error-box" id="errorBox"></div>
 
-    <!-- Code block with line numbers -->
-    <div class="code-scroll" id="codeBlock" style="display:none">
-      <pre>
-        <div class="line-numbers" id="lineNumbers"></div>
-        <div class="code-content" id="codeContent"></div>
-      </pre>
-    </div>
+    <!-- RESULT CARD -->
+    <div class="card result-card" id="resultCard">
 
-    <!-- Output -->
-    <div class="output-section" id="outputSection">
-      <div class="output-label">▶ Output</div>
-      <div class="output-text" id="outputText"></div>
-    </div>
+      <!-- Result header -->
+      <div class="result-header">
+        <div class="lang-badge">
+          <div class="lang-dot"></div>
+          <span id="langLabel">—</span>
+        </div>
+        <div class="result-actions">
+          <button class="icon-btn" id="copyBtn" onclick="copyCode()">
+            📋 Copy Code
+          </button>
+          <button class="icon-btn" id="shareBtn" onclick="copyShareLink()">
+            🔗 Share
+          </button>
+        </div>
+      </div>
 
-    <!-- Meta -->
-    <div class="meta-bar" id="metaBar" style="display:none">
-      <div class="meta-item">🤖 <strong id="metaModel">—</strong></div>
-      <div class="meta-item">⚡ <strong id="metaLatency">—</strong></div>
-      <div class="meta-item">🪙 <strong id="metaTokens">—</strong></div>
-      <div class="meta-item">🔖 <strong id="metaType">—</strong></div>
-    </div>
+      <!-- Shimmer while loading -->
+      <div class="shimmer" id="shimmer">
+        <div class="shimmer-line" style="width:55%"></div>
+        <div class="shimmer-line" style="width:80%"></div>
+        <div class="shimmer-line" style="width:65%"></div>
+        <div class="shimmer-line" style="width:72%"></div>
+        <div class="shimmer-line" style="width:48%"></div>
+      </div>
 
-    <!-- Share URL -->
-    <div class="share-row" id="shareRow" style="display:none">
-      <span class="output-label" style="margin-bottom:0;white-space:nowrap">🔗 Share:</span>
-      <div class="share-url" id="shareUrlDisplay">—</div>
-    </div>
-    </div>
+      <!-- Code block with line numbers -->
+      <div class="code-scroll" id="codeBlock" style="display:none">
+        <pre>
+          <div class="line-numbers" id="lineNumbers"></div>
+          <div class="code-content" id="codeContent"></div>
+        </pre>
+      </div>
 
+      <!-- Output -->
+      <div class="output-section" id="outputSection">
+        <div class="output-label">▶ Output</div>
+        <div class="output-text" id="outputText"></div>
+      </div>
+
+      <!-- Meta -->
+      <div class="meta-bar" id="metaBar" style="display:none">
+        <div class="meta-item">🤖 <strong id="metaModel">—</strong></div>
+        <div class="meta-item">⚡ <strong id="metaLatency">—</strong></div>
+        <div class="meta-item">🪙 <strong id="metaTokens">—</strong></div>
+        <div class="meta-item">🔖 <strong id="metaType">—</strong></div>
+      </div>
+
+      <!-- Share URL -->
+      <div class="share-row" id="shareRow" style="display:none">
+        <span class="output-label" style="margin-bottom:0;white-space:nowrap">🔗 Share:</span>
+        <div class="share-url" id="shareUrlDisplay">—</div>
+      </div>
+    </div>
   </div>
-</div>
-<div id="shareTab" style="display:none; padding:20px;">
-  <h2>🔗 Code Share</h2>
 
-  <textarea id="shareCode" style="width:100%; height:200px;" placeholder="Paste your code here..."></textarea>
+  <!-- SHARE TAB -->
+  <div id="shareTab" class="share-tab">
+    <h2>🔗 Code Share</h2>
 
-  <br><br>
+    <textarea id="shareCode" class="share-textarea" placeholder="Paste your code here..."></textarea>
 
-  <button onclick="createShare()">Create Share Link</button>
+    <div class="share-actions">
+      <button class="gen-btn" onclick="createShare()">Create Share Link</button>
+      <button class="icon-btn" onclick="copySharedCode()">📋 Copy Code</button>
+    </div>
 
-  <p id="shareLink"></p>
+    <div class="share-link-display" id="shareLink"></div>
+  </div>
 
-  <br>
-
-  <button onclick="copySharedCode()">📋 Copy Code</button>
 </div>
 
 <script>
   // ── CONFIG ──
-  // Change this to your Render backend URL
   const API_URL = "https://codeshare-fixed.onrender.com";
 
   let currentMode = 'standard';
@@ -674,6 +773,26 @@
     currentMode = mode;
     document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
+  }
+
+  // ── TAB SWITCHING ──
+  function showTab(tab) {
+    const generateTab = document.getElementById('generateTab');
+    const shareTab = document.getElementById('shareTab');
+    const tabGenerate = document.getElementById('tabGenerate');
+    const tabShare = document.getElementById('tabShare');
+
+    if (tab === 'generate') {
+      generateTab.style.display = 'block';
+      shareTab.classList.remove('visible');
+      tabGenerate.classList.add('active');
+      tabShare.classList.remove('active');
+    } else if (tab === 'share') {
+      generateTab.style.display = 'none';
+      shareTab.classList.add('visible');
+      tabGenerate.classList.remove('active');
+      tabShare.classList.add('active');
+    }
   }
 
   // ── GENERATE ──
@@ -845,81 +964,66 @@
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleGenerate();
   });
 
-  function showTab(tab) {
-  document.getElementById('generateTab').style.display = 'none';
-  document.getElementById('shareTab').style.display = 'none';
+  // ── CREATE SHARE (from share tab) ──
+  async function createShare() {
+    const code = document.getElementById("shareCode").value;
 
-  if (tab === 'generate') document.getElementById('generateTab').style.display = 'block';
-  if (tab === 'share') document.getElementById('shareTab').style.display = 'block';
-}
+    if (!code) {
+      alert("Write code first");
+      return;
+    }
 
-// CREATE SHARE LINK
-async function createShare() {
-  const code = document.getElementById("shareCode").value;
+    try {
+      const res = await fetch(`${API_URL}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userInput: code,
+          language: "Auto",
+          mode: "standard"
+        })
+      });
 
-  if (!code) return alert("Write code first");
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Share creation failed');
 
-  const res = await fetch(`${API_URL}/api/generate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      userInput: code,
-      language: "Auto",
-      mode: "standard"
-    })
-  });
-
-  const data = await res.json();
-  document.getElementById("shareLink").innerText = data.shareUrl;
-}
-
-// LOAD CODE FROM LINK
-async function loadSharedCode() {
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("slug");
-
-  if (!slug) return;
-
-  try {
-    const res = await fetch(`${API_URL}/api/s/${slug}`);
-    const data = await res.json();
-
-    showTab("share");
-    document.getElementById("shareCode").value = data.code;
-
-  } catch (err) {
-    console.log("Error loading shared code");
+      const slug = data.slug;
+      const link = `${window.location.origin}?slug=${slug}`;
+      const linkDisplay = document.getElementById("shareLink");
+      linkDisplay.textContent = link;
+      linkDisplay.classList.add('visible');
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   }
-}
 
-// COPY
-async function createShare() {
-  const code = document.getElementById("shareCode").value;
+  // ── COPY SHARED CODE ──
+  async function copySharedCode() {
+    const code = document.getElementById("shareCode").value;
+    if (!code) return;
+    await navigator.clipboard.writeText(code);
+    alert("Code copied to clipboard!");
+  }
 
-  if (!code) return alert("Write code first");
+  // ── LOAD CODE FROM LINK ──
+  async function loadSharedCode() {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
 
-  const res = await fetch(`${API_URL}/api/generate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      userInput: code,
-      language: "Auto",
-      mode: "standard"
-    })
-  });
+    if (!slug) return;
 
-  const data = await res.json();
+    try {
+      const res = await fetch(`${API_URL}/api/s/${slug}`);
+      const data = await res.json();
 
-  const slug = data.slug;
-  const link = `${window.location.origin}?slug=${slug}`;
-  document.getElementById("shareLink").innerText = link;
-}
+      showTab("share");
+      document.getElementById("shareCode").value = data.code;
+    } catch (err) {
+      console.error("Error loading shared code:", err);
+    }
+  }
 
-window.onload = loadSharedCode;
+  window.onload = loadSharedCode;
 </script>
 
 </body>
